@@ -1,14 +1,6 @@
 import HTTPMethod from 'http-method-enum';
 import { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
-
-const isPromise = <T>(fn: IsAuthenticatedHandler) => {
-  return !!(
-    fn &&
-    ((fn as unknown) as Promise<T>).then &&
-    typeof ((fn as unknown) as Promise<T>).then === 'function' &&
-    fn?.constructor?.name === 'Promise'
-  );
-};
+import { promisify } from './promisify';
 
 type ExecuteFn = (
   req: NextApiRequest,
@@ -27,19 +19,16 @@ export const initializeHttpWrapper = (
   isAuthenticated?: IsAuthenticatedHandler,
   logger?: (err: unknown) => void
 ) => {
+  const isAuthenticatedAsync = isAuthenticated
+    ? promisify(isAuthenticated)
+    : undefined;
+
   const withAuth = <T>(
     apiRoute: NextApiHandler<T>,
     isAuthenticated: IsAuthenticatedHandler
   ): NextApiHandler<T> => {
     return async (req, res) => {
-      let isLoggedIn = false;
-
-      // Check if isAuthenticated is a Promise or a function
-      if (isPromise(isAuthenticated)) {
-        isLoggedIn = await isAuthenticated(req);
-      } else {
-        isLoggedIn = isAuthenticated(req) as boolean;
-      }
+      let isLoggedIn = await isAuthenticated(req);
 
       if (isLoggedIn) {
         return apiRoute(req, res);
@@ -88,13 +77,16 @@ export const initializeHttpWrapper = (
       res.status(405).end('Unsupported method');
     };
 
-    if (!isAuthenticated) {
+    if (!isAuthenticatedAsync) {
       return methodExecute;
     }
 
     switch (access) {
       case 'auth':
-        return withAuth(methodExecute, isAuthenticated);
+        return withAuth(
+          methodExecute,
+          isAuthenticatedAsync as IsAuthenticatedHandler
+        );
       default:
         return methodExecute;
     }
