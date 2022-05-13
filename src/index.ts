@@ -1,6 +1,5 @@
 import HTTPMethod from 'http-method-enum';
 import { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
-import { promisify } from './promisify';
 
 type ExecuteFn = (
   req: NextApiRequest,
@@ -19,16 +18,12 @@ export const initializeHttpWrapper = (
   isAuthenticated?: IsAuthenticatedHandler,
   logger?: (err: unknown) => void
 ) => {
-  const isAuthenticatedAsync = isAuthenticated
-    ? promisify(isAuthenticated)
-    : undefined;
-
   const withAuth = <T>(
     apiRoute: NextApiHandler<T>,
-    isAuthenticated: IsAuthenticatedHandler
+    authHandler: IsAuthenticatedHandler
   ): NextApiHandler<T> => {
     return async (req, res) => {
-      let isLoggedIn = await isAuthenticated(req);
+      const isLoggedIn = await authHandler(req);
 
       if (isLoggedIn) {
         return apiRoute(req, res);
@@ -77,16 +72,13 @@ export const initializeHttpWrapper = (
       res.status(405).end('Unsupported method');
     };
 
-    if (!isAuthenticatedAsync) {
+    if (!isAuthenticated) {
       return methodExecute;
     }
 
     switch (access) {
       case 'auth':
-        return withAuth(
-          methodExecute,
-          isAuthenticatedAsync as IsAuthenticatedHandler
-        );
+        return withAuth(methodExecute, isAuthenticated);
       default:
         return methodExecute;
     }
