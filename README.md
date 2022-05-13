@@ -21,27 +21,27 @@ $ yarn add  nextjs-http-wrapper
 First we will need to initialize our method wrapper.
 You can either use initialize it with or without isAuthenticated function/Promise.
 
-With authentication
+Setup with authentication
 
-```
-import { NextApiRequest } from "next";
-import { initializeHttpWrapper } from "nextjs-http-wrapper";
+```ts
+import { NextApiRequest } from 'next';
+import { initializeHttpWrapper } from 'nextjs-http-wrapper';
 
 // This can either be a normal function or a Promise.
-const isAuthenticated = (req: NextApiRequest) => {
+const withAuth = (req: NextApiRequest) => {
   // Some authentication logic
   const isLoggedIn = req.user;
 
   return isLoggedIn;
 };
 
-export const httpMethodWrapper = initializeHttpWrapper(isAuthenticated);
+export const httpMethodWrapper = initializeHttpWrapper(withAuth);
 ```
 
-or without authentication
+Setup without authentication
 
-```
-import { initializeHttpWrapper } from "nextjs-http-wrapper";
+```ts
+import { initializeHttpWrapper } from 'nextjs-http-wrapper';
 
 export const httpMethodWrapper = initializeHttpWrapper();
 ```
@@ -50,24 +50,24 @@ export const httpMethodWrapper = initializeHttpWrapper();
 
 Within your Next.js application there is a api folder `/pages/api/*` where all your api handlers live.
 
-```
-import type { NextApiRequest, NextApiResponse } from "next";
-import { httpMethodWrapper } from "../../lib/httpMethodWrapper";
+```ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { httpMethodWrapper } from '../../lib/httpMethodWrapper';
 
 const getHandler = (_req: NextApiRequest, res: NextApiResponse) => {
-  res.status(200).send("Get");
+  res.status(200).send('Get');
 };
 
 const postHandler = (_req: NextApiRequest, res: NextApiResponse) => {
-  res.status(200).send("POST");
+  res.status(200).send('POST');
 };
 
 const deleteHandler = (_req: NextApiRequest, res: NextApiResponse) => {
-  res.status(200).send("DELETE");
+  res.status(200).send('DELETE');
 };
 
 const putHandler = (_req: NextApiRequest, res: NextApiResponse) => {
-  res.status(200).send("PUT");
+  res.status(200).send('PUT');
 };
 
 export default httpMethodWrapper(
@@ -77,10 +77,10 @@ export default httpMethodWrapper(
     DELETE: deleteHandler,
     // Inline function
     PUT: (_req, res) => {
-      res.status(200).send("PUT");
+      res.status(200).send('PUT');
     },
     // Put as many http methods as you like.
   },
-  "auth" // Optional
+  'auth' // Optional
 );
 ```
