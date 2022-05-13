@@ -1,107 +1,86 @@
-# nextjs-http-wrapper
+# Nextjs http method wrapper (nextjs-http-wrapper)
 
-Http method wrapper helper function for Nextjs API routes.
+[![NPM version](https://img.shields.io/npm/v/nextjs-http-wrapper.svg?style=flat)](https://npmjs.com/package/nextjs-http-wrapper)
+[![NPM downloads](https://img.shields.io/npm/dm/nextjs-http-wrapper.svg?style=flat)](https://npmjs.com/package/nextjs-http-wrapper)
 
-# TSDX User Guide
+## About
 
-Congrats! You just saved yourself hours of work by bootstrapping this project with TSDX. Let’s get you oriented with what’s here and how to use it.
+Http method wrapper helper function for Nextjs API routes.<br>
+It encapsulates Next.js api http methods with a single function. So now you don't have to check the http method within the handler. `nextjs-http-wrapper` makes sure that the `req.method` matches the http method key passed to the wrapper.
+The wrapper also supports authentication.
 
-> This TSDX setup is meant for developing libraries (not apps!) that can be published to NPM. If you’re looking to build a Node app, you could use `ts-node-dev`, plain `ts-node`, or simple `tsc`.
+## Installation
 
-> If you’re new to TypeScript, checkout [this handy cheatsheet](https://devhints.io/typescript)
-
-## Commands
-
-TSDX scaffolds your new library inside `/src`.
-
-To run TSDX, use:
-
-```bash
-npm start # or yarn start
+```sh
+$ npm install --save nextjs-http-wrapper
+$ yarn add  nextjs-http-wrapper
 ```
 
-This builds to `/dist` and runs the project in watch mode so any edits you save inside `src` causes a rebuild to `/dist`.
+## Setup
 
-To do a one-off build, use `npm run build` or `yarn build`.
+First we will need to initialize our method wrapper.
+You can either use initialize it with or without isAuthenticated function/Promise.
 
-To run tests, use `npm test` or `yarn test`.
+With authentication
 
-## Configuration
+```
+import { NextApiRequest } from "next";
+import { initializeHttpWrapper } from "nextjs-http-wrapper";
 
-Code quality is set up for you with `prettier`, `husky`, and `lint-staged`. Adjust the respective fields in `package.json` accordingly.
+// This can either be a normal function or a Promise.
+const isAuthenticated = (req: NextApiRequest) => {
+  // Some authentication logic
+  const isLoggedIn = req.user;
 
-### Jest
+  return isLoggedIn;
+};
 
-Jest tests are set up to run with `npm test` or `yarn test`.
-
-### Bundle Analysis
-
-[`size-limit`](https://github.com/ai/size-limit) is set up to calculate the real cost of your library with `npm run size` and visualize the bundle with `npm run analyze`.
-
-#### Setup Files
-
-This is the folder structure we set up for you:
-
-```txt
-/src
-  index.tsx       # EDIT THIS
-/test
-  blah.test.tsx   # EDIT THIS
-.gitignore
-package.json
-README.md         # EDIT THIS
-tsconfig.json
+export const httpMethodWrapper = initializeHttpWrapper(isAuthenticated);
 ```
 
-### Rollup
+or without authentication
 
-TSDX uses [Rollup](https://rollupjs.org) as a bundler and generates multiple rollup configs for various module formats and build settings. See [Optimizations](#optimizations) for details.
+```
+import { initializeHttpWrapper } from "nextjs-http-wrapper";
 
-### TypeScript
-
-`tsconfig.json` is set up to interpret `dom` and `esnext` types, as well as `react` for `jsx`. Adjust according to your needs.
-
-## Continuous Integration
-
-### GitHub Actions
-
-Two actions are added by default:
-
-- `main` which installs deps w/ cache, lints, tests, and builds on all pushes against a Node and OS matrix
-- `size` which comments cost comparison of your library on every pull request using [`size-limit`](https://github.com/ai/size-limit)
-
-## Optimizations
-
-Please see the main `tsdx` [optimizations docs](https://github.com/palmerhq/tsdx#optimizations). In particular, know that you can take advantage of development-only optimizations:
-
-```js
-// ./types/index.d.ts
-declare var __DEV__: boolean;
-
-// inside your code...
-if (__DEV__) {
-  console.log('foo');
-}
+export const httpMethodWrapper = initializeHttpWrapper();
 ```
 
-You can also choose to install and use [invariant](https://github.com/palmerhq/tsdx#invariant) and [warning](https://github.com/palmerhq/tsdx#warning) functions.
+## Usage
 
-## Module Formats
+Within your Next.js application there is a api folder `/pages/api/*` where all your api handlers live.
 
-CJS, ESModules, and UMD module formats are supported.
+```
+import type { NextApiRequest, NextApiResponse } from "next";
+import { httpMethodWrapper } from "../../lib/httpMethodWrapper";
 
-The appropriate paths are configured in `package.json` and `dist/index.js` accordingly. Please report if any issues are found.
+const getHandler = (_req: NextApiRequest, res: NextApiResponse) => {
+  res.status(200).send("Get");
+};
 
-## Named Exports
+const postHandler = (_req: NextApiRequest, res: NextApiResponse) => {
+  res.status(200).send("POST");
+};
 
-Per Palmer Group guidelines, [always use named exports.](https://github.com/palmerhq/typescript#exports) Code split inside your React app instead of your React library.
+const deleteHandler = (_req: NextApiRequest, res: NextApiResponse) => {
+  res.status(200).send("DELETE");
+};
 
-## Including Styles
+const putHandler = (_req: NextApiRequest, res: NextApiResponse) => {
+  res.status(200).send("PUT");
+};
 
-There are many ways to ship styles, including with CSS-in-JS. TSDX has no opinion on this, configure how you like.
-
-For vanilla CSS, you can include it at the root directory and add it to the `files` section in your `package.json`, so that it can be imported separately by your users and run through their bundler's loader.
-
-## Publishing to NPM
-
-We recommend using [np](https://github.com/sindresorhus/np).
+export default httpMethodWrapper(
+  {
+    GET: getHandler,
+    POST: postHandler,
+    DELETE: deleteHandler,
+    // Inline function
+    PUT: (_req, res) => {
+      res.status(200).send("PUT");
+    },
+    // Put as many http methods as you like.
+  },
+  "auth" // Optional
+);
+```

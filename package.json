@@ -8,8 +8,16 @@
     "src"
   ],
   "engines": {
-    "node": ">=10"
+    "node": ">=12"
   },
+  "keywords": [
+    "nextjs",
+    "react",
+    "typescript",
+    "nextjs-http-method-wrapper",
+    "nextjs-http-wrapper",
+    "http-method-wrapper"
+  ],
   "scripts": {
     "start": "tsdx watch",
     "build": "tsdx build",
@@ -30,6 +38,10 @@
     "semi": true,
     "singleQuote": true,
     "trailingComma": "es5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/snaerth/nextjs-http-wrapper"
   },
   "name": "nextjs-http-wrapper",
   "author": "Snær Seljan Þóroddsson",

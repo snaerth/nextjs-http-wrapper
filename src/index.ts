@@ -20,7 +20,7 @@ type ApiMethods = {
 };
 
 type IsAuthenticatedHandler = (
-  req?: NextApiRequest
+  req: NextApiRequest
 ) => boolean | Promise<boolean>;
 
 export const initializeHttpWrapper = (
