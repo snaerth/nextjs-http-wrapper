@@ -9,10 +9,12 @@ export const isError = (error: unknown): error is Error => {
   return isNonNullObject(error) && 'name' in error && 'message' in error;
 };
 
-export const getErrorMessage = (error: unknown): string | undefined => {
+export const getErrorMessage = (error: unknown) => {
   if (isNonNullObject(error) && typeof error.message === 'string') {
     return error.message;
   }
+
+  return undefined;
 };
 
 const generateErrorMessage = (error: unknown): string | undefined => {

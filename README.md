@@ -21,24 +21,32 @@ $ yarn add  nextjs-http-wrapper
 First we will need to initialize our method wrapper.
 You can either use initialize it with or without isAuthenticated function/Promise.
 
-Setup with authentication
+Setup with options, i.e. authentication and error handler. Both are optional.
 
 ```ts
 import { NextApiRequest } from 'next';
 import { initializeHttpWrapper } from 'nextjs-http-wrapper';
 
 // This can either be a normal function or a Promise.
-const withAuth = (req: NextApiRequest) => {
+const authHandler = (req: NextApiRequest) => {
   // Some authentication logic
   const isLoggedIn = req.user;
 
   return isLoggedIn;
 };
 
-export const httpMethodWrapper = initializeHttpWrapper(withAuth);
+const errorHandler = (error: Error) => {
+  // Send error to service like Sentry, LogRocket, etc.
+  console.log(error);
+};
+
+export const httpMethodWrapper = initializeHttpWrapper({
+  authHandler,
+  errorHandler,
+});
 ```
 
-Setup without authentication
+Setup without options.
 
 ```ts
 import { initializeHttpWrapper } from 'nextjs-http-wrapper';
@@ -81,6 +89,11 @@ export default httpMethodWrapper(
     },
     // Put as many http methods as you like.
   },
-  'auth' // Optional
+  // If authHandler is provided when the httpMethodWrapper is initialized,
+  // then authentication is on by default. To turn authentictaion off for special hander
+  // you can provide the following object.
+  {
+    disableAuth: true
+  }
 );
 ```
