@@ -1,5 +1,6 @@
 import HTTPMethod from 'http-method-enum';
 import { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
+import { toErrorObject } from './error';
 
 type ExecuteFn = (
   req: NextApiRequest,
@@ -10,20 +11,27 @@ type ApiMethods = {
   [key in HTTPMethod]?: ExecuteFn;
 };
 
-type IsAuthenticatedHandler = (
-  req: NextApiRequest
-) => boolean | Promise<boolean>;
+type AuthHandler = (req: NextApiRequest) => boolean | Promise<boolean>;
 
-export const initializeHttpWrapper = (
-  isAuthenticated?: IsAuthenticatedHandler,
-  logger?: (err: unknown) => void
-) => {
+type InitializeOptions = {
+  authHandler?: AuthHandler;
+  errorHandler?: (err: Error) => void;
+};
+
+type WrapperOptions = {
+  disaableAuth: boolean;
+};
+
+export const initializeHttpWrapper = ({
+  authHandler,
+  errorHandler,
+}: InitializeOptions) => {
   const withAuth = <T>(
     apiRoute: NextApiHandler<T>,
-    authHandler: IsAuthenticatedHandler
+    authHandlerFn: AuthHandler
   ): NextApiHandler<T> => {
     return async (req, res) => {
-      const isLoggedIn = await authHandler(req);
+      const isLoggedIn = await authHandlerFn(req);
 
       if (isLoggedIn) {
         return apiRoute(req, res);
@@ -46,7 +54,10 @@ export const initializeHttpWrapper = (
    *     ...
    *   });
    */
-  return (apiMethods: ApiMethods, access?: 'auth'): NextApiHandler => {
+  return (
+    apiMethods: ApiMethods,
+    { disaableAuth = false }: WrapperOptions
+  ): NextApiHandler => {
     const methodExecute = async (
       req: NextApiRequest,
       res: NextApiResponse
@@ -58,13 +69,13 @@ export const initializeHttpWrapper = (
           try {
             return await executeFn(req, res);
           } catch (err) {
-            if (logger) {
-              logger(err);
-            } else {
-              console.error(err);
+            const error = toErrorObject(err);
+
+            if (errorHandler) {
+              errorHandler(toErrorObject(error));
             }
 
-            return res.status(500).send(err);
+            return res.status(500).send(error);
           }
         }
       }
@@ -72,15 +83,12 @@ export const initializeHttpWrapper = (
       res.status(405).end('Unsupported method');
     };
 
-    if (!isAuthenticated) {
+    if (disaableAuth) {
       return methodExecute;
-    }
-
-    switch (access) {
-      case 'auth':
-        return withAuth(methodExecute, isAuthenticated);
-      default:
-        return methodExecute;
+    } else if (authHandler) {
+      return withAuth(methodExecute, authHandler);
+    } else {
+      return methodExecute;
     }
   };
 };
