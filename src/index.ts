@@ -18,16 +18,13 @@ type InitializeOptions = {
   errorHandler?: (err: Error) => void;
 };
 
-type WrapperOptions =
-  | {
-      disaableAuth: boolean;
-    }
-  | undefined;
+type WrapperOptions = {
+  disaableAuth: boolean;
+};
 
-export const initializeHttpWrapper = ({
-  authHandler,
-  errorHandler,
-}: InitializeOptions) => {
+export const initializeHttpWrapper = (options?: InitializeOptions) => {
+  const { authHandler, errorHandler } = options || {};
+
   const withAuth = <T>(
     apiRoute: NextApiHandler<T>,
     authHandlerFn: AuthHandler
@@ -56,8 +53,11 @@ export const initializeHttpWrapper = ({
    *     ...
    *   });
    */
-  return (apiMethods: ApiMethods, options: WrapperOptions): NextApiHandler => {
-    const { disaableAuth } = options || {};
+  return (
+    apiMethods: ApiMethods,
+    wrapperOptions?: WrapperOptions
+  ): NextApiHandler => {
+    const { disaableAuth } = wrapperOptions || {};
 
     const methodExecute = async (
       req: NextApiRequest,
@@ -93,3 +93,10 @@ export const initializeHttpWrapper = ({
     }
   };
 };
+
+const wrapper = initializeHttpWrapper();
+
+wrapper({
+  GET: () => {},
+  POST: () => {},
+});
