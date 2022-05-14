@@ -18,9 +18,11 @@ type InitializeOptions = {
   errorHandler?: (err: Error) => void;
 };
 
-type WrapperOptions = {
-  disaableAuth: boolean;
-};
+type WrapperOptions =
+  | {
+      disaableAuth: boolean;
+    }
+  | undefined;
 
 export const initializeHttpWrapper = ({
   authHandler,
@@ -54,10 +56,9 @@ export const initializeHttpWrapper = ({
    *     ...
    *   });
    */
-  return (
-    apiMethods: ApiMethods,
-    { disaableAuth = false }: WrapperOptions
-  ): NextApiHandler => {
+  return (apiMethods: ApiMethods, options: WrapperOptions): NextApiHandler => {
+    const { disaableAuth } = options || {};
+
     const methodExecute = async (
       req: NextApiRequest,
       res: NextApiResponse
