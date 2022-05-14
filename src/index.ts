@@ -93,10 +93,3 @@ export const initializeHttpWrapper = (options?: InitializeOptions) => {
     }
   };
 };
-
-const wrapper = initializeHttpWrapper();
-
-wrapper({
-  GET: () => {},
-  POST: () => {},
-});
